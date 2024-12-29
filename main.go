@@ -61,7 +61,16 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness)
 	v1Router.Get("/error", handlerError)
 
-	v1Router.Post("/create_user", apiCnf.handlerCreateUser)
+	// handlerCreateUser works as a method of apiConf struct
+	v1Router.Post("/users", apiCnf.handlerCreateUser)
+
+	// handlerGetUser works as a method of apiConf struct
+	// Calls middlewareAuth before we get user information
+	v1Router.Get("/user", apiCnf.middlewareAuth(apiCnf.handlerGetUser))
+
+	// handlerCreateFeed works as a method of apiConf struct
+	v1Router.Post("/feeds", apiCnf.middlewareAuth(apiCnf.handlerCreateFeed))
+	v1Router.Get("/feeds", apiCnf.handlerGetFeeds)
 
 	// split up into independent routers as V1Router
 	router.Mount("/v1", v1Router)
