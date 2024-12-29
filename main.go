@@ -1,15 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/daniela2001-png/rss_aggregator_project/internal/database"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq" // pq is a pure Go Postgres driver for the database/sql package.
 )
+
+type apiConf struct {
+	DB *database.Queries
+}
 
 func main() {
 
@@ -19,6 +26,21 @@ func main() {
 	if len(portNumber) == 0 {
 		// exit of the main programm
 		log.Fatal("The PORT env is required")
+	}
+
+	dbURL := os.Getenv("DB_URL")
+	if len(dbURL) == 0 {
+		// exit of the main programm
+		log.Fatal("The DB_URL env is required")
+	}
+
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Can not connect to database")
+	}
+	dbQuery := database.New(conn)
+	apiCnf := apiConf{
+		DB: dbQuery,
 	}
 
 	router := chi.NewRouter()
@@ -39,6 +61,8 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness)
 	v1Router.Get("/error", handlerError)
 
+	v1Router.Post("/create_user", apiCnf.handlerCreateUser)
+
 	// split up into independent routers as V1Router
 	router.Mount("/v1", v1Router)
 
@@ -47,7 +71,7 @@ func main() {
 		Addr:    fmt.Sprintf(":%s", portNumber),
 	}
 	fmt.Println("Running on the port number: ", portNumber)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatalf("something was wrong listening on the TCP network: %v", err)
 	}
