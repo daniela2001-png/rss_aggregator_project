@@ -72,6 +72,10 @@ func main() {
 	v1Router.Post("/feeds", apiCnf.middlewareAuth(apiCnf.handlerCreateFeed))
 	v1Router.Get("/feeds", apiCnf.handlerGetFeeds)
 
+	v1Router.Post("/feed_follows", apiCnf.middlewareAuth(apiCnf.handlerCreateFeedFollow))
+	v1Router.Get("/feed_follows", apiCnf.middlewareAuth(apiCnf.handlerGetListOfFeedsOfAnUser))
+	v1Router.Delete("/feed_follows/{feedFollowID}", apiCnf.middlewareAuth(apiCnf.handlerUnFollowFeedID))
+
 	// split up into independent routers as V1Router
 	router.Mount("/v1", v1Router)
 

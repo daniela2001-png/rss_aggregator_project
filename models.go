@@ -24,6 +24,14 @@ type ResponseFeed struct {
 	UserID    string    `json:"user_id"`
 }
 
+type ResponseFeedToFollow struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserID    uuid.UUID `json:"user_id"`
+	FeedID    uuid.UUID `json:"feed_id"`
+}
+
 func ConvertDataBaseUserToResponseUser(dbUser database.User) ResponseUser {
 	return ResponseUser{
 		ID:        dbUser.ID,
@@ -49,6 +57,24 @@ func ConvertDataBaseListOfFeedsToResponseFeeds(dbFeeds []database.Feed) []Respon
 	feeds := []ResponseFeed{}
 	for _, value := range dbFeeds {
 		feeds = append(feeds, ConvertDataBaseFeedToResponseFeed(value))
+	}
+	return feeds
+}
+
+func ConvertDataBaseFeedToFollowToResponseFeedToFollow(dbFeedFollow database.FeedFollow) ResponseFeedToFollow {
+	return ResponseFeedToFollow{
+		ID:        dbFeedFollow.ID,
+		CreatedAt: dbFeedFollow.CreatedAt,
+		UpdatedAt: dbFeedFollow.UpdatedAt,
+		UserID:    dbFeedFollow.UserID,
+		FeedID:    dbFeedFollow.FeedID,
+	}
+}
+
+func ConvertDataBaseListOfFeedsToFollowToResponseFeedsToFollow(dbFeedsToFollow []database.FeedFollow) []ResponseFeedToFollow {
+	feeds := []ResponseFeedToFollow{}
+	for _, value := range dbFeedsToFollow {
+		feeds = append(feeds, ConvertDataBaseFeedToFollowToResponseFeedToFollow(value))
 	}
 	return feeds
 }
