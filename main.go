@@ -19,6 +19,14 @@ type apiConf struct {
 }
 
 func main() {
+	URL := "https://techcrunch.com/feed/" // tech blog RSS link
+	rssFeed, err := urlToFeed(URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, value := range rssFeed.Channel.Item {
+		fmt.Println(value)
+	}
 
 	// load envs from .env file
 	godotenv.Load(".env")
