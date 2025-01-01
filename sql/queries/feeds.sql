@@ -6,10 +6,10 @@ RETURNING *;
 -- name: GetFeeds :many
 SELECT * FROM feeds;
 
--- name: GetNextFeedToFetch :one
+-- name: GetNextFeedSToFetch :many
 SELECT * FROM feeds
 ORDER BY last_fetched_at ASC NULLS FIRST -- null values goes first before any non-null value in ascending order, for can always update the feed that still does not got fetched (NULL value) or the oldest feeds that needs to be updated !
-LIMIT 1;
+LIMIT $1;
 
 -- name: MarkFeedAsFetched :one
 UPDATE feeds
