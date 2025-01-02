@@ -46,3 +46,15 @@ func (api *apiConf) handlerGetUser(w http.ResponseWriter, r *http.Request, user 
 	response := ConvertDataBaseUserToResponseUser(user)
 	setJSONResponse(w, 200, response)
 }
+
+func (api *apiConf) handlerGetNewPostsFromUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	posts, err := api.DB.GetPostsByUserID(r.Context(), database.GetPostsByUserIDParams{
+		UserID: user.ID,
+		Limit:  10,
+	})
+	if err != nil {
+		setErrorResponse(w, 500, "error getting posts")
+		return
+	}
+	setJSONResponse(w, 200, ConvertGetPostsByUserIDRowToSliceOfPosts(posts))
+}

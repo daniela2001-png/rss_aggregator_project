@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"sync"
 	"time"
@@ -9,7 +10,7 @@ import (
 	"github.com/daniela2001-png/rss_aggregator_project/internal/database"
 )
 
-func scrapeFeed(wg *sync.WaitGroup, feed database.Feed, db database.Queries) {
+func scrapeFeed(wg *sync.WaitGroup, feed database.Feed, db database.Queries, conn *sql.DB) {
 	defer wg.Done()
 
 	_, err := db.MarkFeedAsFetched(context.Background(), feed.ID)
@@ -22,20 +23,21 @@ func scrapeFeed(wg *sync.WaitGroup, feed database.Feed, db database.Queries) {
 		log.Println("error fetching feed from RSS api: ", err)
 		return
 	}
-	// TODO: Creat tha posts table and save items/posts there
-	for _, item := range rssFeed.Channel.Item {
-		log.Println("Found post: ", item.Title)
+	// TODO: Create the posts table and save items/posts there
+	posts := ConvertRSSItemsListToDatabaseCreatePostParams(rssFeed.Channel.Item, feed.ID)
+	err = db.InsertPostsBulk(context.Background(), conn, posts)
+	if err != nil {
+		log.Println("error inserting posts: ", err)
+		return
 	}
-	log.Printf("Feed %s collected, %v posts found", feed.Name, len(rssFeed.Channel.Item))
 }
 
-func startScraping(db database.Queries, concurrency int, timeBetweenRequest time.Duration) {
-
+func startScraping(db database.Queries, concurrency int, timeBetweenRequest time.Duration, conn *sql.DB) {
 	log.Printf("Scraping on %d goroutines every %s duration", concurrency, timeBetweenRequest)
 	if timeBetweenRequest < 0 {
 		log.Fatal("duration must be greater than zero")
 	}
-	// Unlike timers, which are used for timeouts, "tickers" repeat the execution of a task every n seconds
+	// Unlike timers, which are used for timeouts, "tickers" repeat the execution of a task every n seconds or minutes
 	ticker := time.NewTicker(timeBetweenRequest)
 	for ; ; <-ticker.C {
 		// context.Background is the global context when we do not have the scoped context
@@ -45,9 +47,10 @@ func startScraping(db database.Queries, concurrency int, timeBetweenRequest time
 			continue
 		}
 		var wg sync.WaitGroup
+		log.Println("The lenght of feeds is equal to: ", len(feeds))
 		for _, feed := range feeds {
 			wg.Add(1)
-			go scrapeFeed(&wg, feed, db)
+			go scrapeFeed(&wg, feed, db, conn)
 		}
 		wg.Wait()
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 
 	"github.com/daniela2001-png/rss_aggregator_project/internal/database"
@@ -77,4 +78,44 @@ func ConvertDataBaseListOfFeedsToFollowToResponseFeedsToFollow(dbFeedsToFollow [
 		feeds = append(feeds, ConvertDataBaseFeedToFollowToResponseFeedToFollow(value))
 	}
 	return feeds
+}
+
+func ConvertRSSItemsListToDatabaseCreatePostParams(rssItems []RSSItem, feedID uuid.UUID) []database.CreatePostParams {
+	posts := []database.CreatePostParams{}
+	for _, value := range rssItems {
+		pubDate, err := time.Parse(time.RFC1123, value.PubDate)
+		if err != nil {
+			log.Println("can not parse string to time format: ", err)
+			return nil
+		}
+		posts = append(posts, database.CreatePostParams{
+			ID:          uuid.New(),
+			Title:       value.Title,
+			Description: value.Description,
+			Link:        value.Link,
+			PubDate:     pubDate,
+			FeedID:      feedID,
+		})
+	}
+	return posts
+}
+
+type Post struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Link        string    `json:"link"`
+	PubDate     time.Time `json:"publication_date"`
+}
+
+func ConvertGetPostsByUserIDRowToSliceOfPosts(dbPosts []database.GetPostsByUserIDRow) []Post {
+	posts := []Post{}
+	for _, value := range dbPosts {
+		posts = append(posts, Post{
+			Title:       value.Title,
+			Description: value.Description,
+			Link:        value.Link,
+			PubDate:     value.PubDate,
+		})
+	}
+	return posts
 }

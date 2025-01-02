@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/daniela2001-png/rss_aggregator_project/internal/database"
 	"github.com/go-chi/chi"
@@ -15,19 +16,11 @@ import (
 )
 
 type apiConf struct {
-	DB *database.Queries
+	DB   *database.Queries
+	Conn *sql.DB
 }
 
 func main() {
-	URL := "https://techcrunch.com/feed/" // tech blog RSS link
-	rssFeed, err := urlToFeed(URL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, value := range rssFeed.Channel.Item {
-		fmt.Println(value)
-	}
-
 	// load envs from .env file
 	godotenv.Load(".env")
 	portNumber := os.Getenv("PORT")
@@ -48,8 +41,11 @@ func main() {
 	}
 	dbQuery := database.New(conn)
 	apiCnf := apiConf{
-		DB: dbQuery,
+		DB:   dbQuery,
+		Conn: conn,
 	}
+
+	go startScraping(*dbQuery, 10, time.Minute, conn)
 
 	router := chi.NewRouter()
 
@@ -83,6 +79,9 @@ func main() {
 	v1Router.Post("/feed_follows", apiCnf.middlewareAuth(apiCnf.handlerCreateFeedFollow))
 	v1Router.Get("/feed_follows", apiCnf.middlewareAuth(apiCnf.handlerGetListOfFeedsOfAnUser))
 	v1Router.Delete("/feed_follows/{feedFollowID}", apiCnf.middlewareAuth(apiCnf.handlerUnFollowFeedID))
+
+	// posts
+	v1Router.Get("/posts", apiCnf.middlewareAuth(apiCnf.handlerGetNewPostsFromUser))
 
 	// split up into independent routers as V1Router
 	router.Mount("/v1", v1Router)

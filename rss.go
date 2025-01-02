@@ -71,7 +71,7 @@ type RSSFeed struct {
 
 func urlToFeed(URL string) (RSSFeed, error) {
 	httpClient := http.Client{
-		Timeout: time.Second * 100,
+		Timeout: time.Second * 10,
 	}
 	response, err := httpClient.Get(URL)
 	if err != nil {
