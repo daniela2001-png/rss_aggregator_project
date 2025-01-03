@@ -11,7 +11,6 @@ import (
 	"github.com/daniela2001-png/rss_aggregator_project/internal/database"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // pq is a pure Go Postgres driver for the database/sql package.
 )
 
@@ -21,8 +20,6 @@ type apiConf struct {
 }
 
 func main() {
-	// load envs from .env file
-	godotenv.Load(".env")
 	portNumber := os.Getenv("PORT")
 	if len(portNumber) == 0 {
 		// exit of the main programm

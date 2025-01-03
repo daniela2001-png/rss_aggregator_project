@@ -43,7 +43,7 @@ func startScraping(db database.Queries, concurrency int, timeBetweenRequest time
 		// context.Background is the global context when we do not have the scoped context
 		feeds, err := db.GetNextFeedSToFetch(context.Background(), int32(concurrency))
 		if err != nil {
-			log.Println("error fetching feeds from feeds table")
+			log.Println("error fetching feeds from feeds table", err)
 			continue
 		}
 		var wg sync.WaitGroup
